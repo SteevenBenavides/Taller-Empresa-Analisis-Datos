@@ -1,0 +1,48 @@
+@startuml
+title Flujo del sistema de tareas distribuidas con RabbitMQ
+
+actor User as U
+participant Producer as P
+participant "RabbitMQ Broker" as R
+participant "Worker 1" as W1
+participant "Worker 2" as W2
+participant Monitor as M
+
+== Envío de tareas ==
+U -> P: Ejecuta productor
+P -> R: Publica mensaje (tarea JSON)\n(queue: tareas_distribuidas)
+note right of R
+  La cola es durable y las tareas son persistentes
+end note
+
+loop 10 veces
+    P -> R: Enviar tarea con complejidad aleatoria
+end
+P -> U: Confirma "Todas las tareas enviadas"
+
+== Distribución de tareas ==
+R -> W1: Entrega tarea 1
+R -> W2: Entrega tarea 2
+... distribución round-robin con prefetch=1 ...
+
+== Procesamiento ==
+W1 -> W1: Procesa tarea N (sleep complejidad)
+alt Éxito
+    W1 -> R: ACK (confirmación de tarea completada)
+else Falla
+    W1 -> R: No envía ACK\nRabbitMQ reencola la tarea
+end
+
+W2 -> W2: Procesa tarea M
+alt Éxito
+    W2 -> R: ACK
+else Falla
+    W2 -> R: No envía ACK
+end
+
+== Monitoreo ==
+M -> R: Consulta estado de la cola
+R --> M: Número de mensajes pendientes
+M -> U: Muestra mensajes en cola en tiempo real
+
+@enduml

@@ -40,11 +40,11 @@ class WorkerTareas:
             print(f"[WORKER-{self.worker_id}] Recibió tarea {tarea_id} (complejidad: {complejidad})", flush=True)
             
             
-            # Simular falla aleatoria (para pruebas)
-            if random.random() < 0.2:  # 20% de probabilidad de falla
-                print(f"[WORKER-{self.worker_id}] ❌ Falló en tarea {tarea_id}", flush=True)
-                # NO enviamos ack - la tarea se reenviará
-                return
+            # # Simular falla aleatoria (para pruebas)
+            # if random.random() < 0.2:  # 20% de probabilidad de falla
+            #     print(f"[WORKER-{self.worker_id}] ❌ Falló en tarea {tarea_id}", flush=True)
+            #     # NO enviamos ack - la tarea se reenviará
+            #     return
             
             # Simular el procesamiento según la complejidad
             time.sleep(complejidad)
