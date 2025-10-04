@@ -10,12 +10,19 @@ services:
       RABBITMQ_DEFAULT_PASS: admin
     networks:
       - rabbitnet
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   producer:
     build: ./producer
     container_name: producer
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
     networks:
@@ -25,7 +32,8 @@ services:
     build: ./worker
     container_name: worker1
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
       - WORKER_ID=1
@@ -36,24 +44,28 @@ services:
     build: ./worker
     container_name: worker2
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
       - WORKER_ID=2
     networks:
       - rabbitnet
+
   monitor:
     build:
       context: ./monitor
     container_name: monitor
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
       - RABBIT_USER=admin
       - RABBIT_PASS=admin
     networks:
       - rabbitnet
+
 networks:
   rabbitnet:
     driver: bridge
