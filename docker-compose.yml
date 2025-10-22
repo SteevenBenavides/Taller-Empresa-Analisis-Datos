@@ -52,20 +52,6 @@ services:
     networks:
       - rabbitnet
 
-  monitor:
-    build:
-      context: ./monitor
-    container_name: monitor
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      - RABBIT_HOST=rabbitmq
-      - RABBIT_USER=admin
-      - RABBIT_PASS=admin
-    networks:
-      - rabbitnet
-
 networks:
   rabbitnet:
     driver: bridge

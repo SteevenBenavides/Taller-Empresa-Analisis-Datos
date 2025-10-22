@@ -19,16 +19,13 @@ class WorkerTareas:
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
         
-        # Declarar la cola como durable
-        self.channel.queue_declare(
-            queue='tareas_distribuidas',
-            durable=True
-        )
+        self.channel.exchange_declare(exchange='distribuidor_tareas', exchange_type='fanout')
         
-        # Configurar prefetch_count=1 para distribución equitativa
-        self.channel.basic_qos(prefetch_count=1)
+        result = self.channel.queue_declare(queue='', exclusive=True)
+        self.queue_name = result.method.queue
+        self.channel.queue_bind(exchange='distribuidor_tareas', queue=self.queue_name)
         
-        print(f"[WORKER-{self.worker_id}] Iniciado y listo para procesar tareas...", flush=True)
+        print(f"[WORKER-{self.worker_id}] Iniciado y listo para procesar tareas suscrito al exchange 'distribuidor_tareas'", flush=True)
     
     def procesar_tarea(self, ch, method, properties, body):
         """Callback para procesar una tarea recibida"""
@@ -40,28 +37,19 @@ class WorkerTareas:
             print(f"[WORKER-{self.worker_id}] Recibió tarea {tarea_id} (complejidad: {complejidad})", flush=True)
             
             
-            # # Simular falla aleatoria (para pruebas)
-            # if random.random() < 0.2:  # 20% de probabilidad de falla
-            #     print(f"[WORKER-{self.worker_id}] ❌ Falló en tarea {tarea_id}", flush=True)
-            #     # NO enviamos ack - la tarea se reenviará
-            #     return
-            
-            # Simular el procesamiento según la complejidad
             time.sleep(complejidad)
             
-            # Confirmar finalización exitosa
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            print(f"[WORKER-{self.worker_id}] ✅ Completó tarea {tarea_id}", flush=True)
+            print(f"[WORKER-{self.worker_id}] Tarea completada: {tarea_id}", flush=True)
             
         except Exception as e:
            print(f"[WORKER-{self.worker_id}] Error: {e}", flush=True)
-            # En caso de error, no confirmamos para que se reenvíe
     
     def iniciar_consumo(self):
         """Inicia el consumo de tareas de la cola"""
         self.channel.basic_consume(
-            queue='tareas_distribuidas',
-            on_message_callback=self.procesar_tarea
+            queue=self.queue_name,
+            on_message_callback=self.procesar_tarea,
+            auto_ack=True  
         )
         
         try:

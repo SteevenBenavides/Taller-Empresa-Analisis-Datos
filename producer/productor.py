@@ -17,9 +17,8 @@ class ProductorTareas:
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
         
-        # Declarar la cola como durable para persistencia
-        self.channel.queue_declare(queue='tareas_distribuidas', durable=True)
-
+        self.channel.exchange_declare(exchange='distribuidor_tareas', exchange_type='fanout')
+        
     def enviar_tarea(self, complejidad):
         """Envía una tarea a la cola con la complejidad especificada"""
         tarea = {
@@ -29,12 +28,9 @@ class ProductorTareas:
         }
         
         self.channel.basic_publish(
-            exchange='',
-            routing_key='tareas_distribuidas',
+            exchange='distribuidor_tareas',
+            routing_key='',
             body=json.dumps(tarea),
-            properties=pika.BasicProperties(
-                delivery_mode=2,  # Hacer el mensaje persistente
-            )
         )
         print(f"[PRODUCER] Tarea enviada: ID {tarea['id']}, Complejidad: {complejidad}", flush=True)
     
