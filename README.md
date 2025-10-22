@@ -79,6 +79,32 @@ Por otro lado vemos que los dos workers han recibido los mismos 10 mensajes y lo
 
 ![img](img/distribuidor_tareas.png)
 
+## Routing
+
+Ahora, evolucionaremos nuestro sistema (como un pokemon) al patron Routing que es la siguiente parte del tutorial de RABBITM. ahora en vez de usar un exchange de tipo `fanout` a uno `direct`, e implementaremos las routing keys a los mensajes en este caso para describir su categoria y nuestros workers decidiran a que categoria suscribirse
+
+Nuestro [Productor.py](producer/productor.py) ahora enviara las tareas con dos tipos: `tareas_cheveres` y `tareas_pailas_reflectivas` las cuales se enviaran al exchange `tareas_reflectivas` que es tipo directo
+
+Por otro lado en [Worker.py](worker/worker.py) nos suscribiremos al exchange `tareas_reflectivas` y cada uno de nuestros workers recibiran un tipo de tarea que se ha asignado en sus variables de entorno `worker1` recibira tarea_chevere y `worker2` recibira tarea_paila_reflectiva y las procesaran.
+
+Levantaremos nuestros contenedores y veremos su salidas
+
+El producer envia sus 10 tareas con su tipo:
+
+![img](img/router_producer.png)
+
+El `worker1` se suscribe a las tareas_cheveres y las procesa:
+
+![img](img/tareas_cheveres.png)
+
+El `worker2` se suscribe a las tarea_paila_reflectiva y las procesa:
+
+![img](img/tareas_pailas.png)
+
+Finalmente vemos la salida en el dashboard de RABBITMQ
+
+![img](img/router.png)
+
 ## Autores
 
 - Juan Sebastian Barajas Vargas

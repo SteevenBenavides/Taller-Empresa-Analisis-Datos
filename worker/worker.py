@@ -9,23 +9,28 @@ class WorkerTareas:
     def __init__(self, worker_id):
         self.worker_id = worker_id
 
-        rabbit_host = os.getenv("RABBIT_HOST", "localhost")
-        rabbit_user = os.getenv("RABBIT_USER", "admin")
-        rabbit_pass = os.getenv("RABBIT_PASS", "admin")
+        rabbit_host = os.getenv("RABBIT_HOST")
+        rabbit_user = os.getenv("RABBIT_USER")
+        rabbit_pass = os.getenv("RABBIT_PASS")
+        tipo_tarea = os.getenv("TIPO_TAREA")
 
         credentials = pika.PlainCredentials(rabbit_user, rabbit_pass)
         parameters = pika.ConnectionParameters(host=rabbit_host, credentials=credentials)
 
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
-        
-        self.channel.exchange_declare(exchange='distribuidor_tareas', exchange_type='fanout')
-        
+
+        self.channel.exchange_declare(exchange='tareas_reflectivas', exchange_type='direct')
+
         result = self.channel.queue_declare(queue='', exclusive=True)
         self.queue_name = result.method.queue
-        self.channel.queue_bind(exchange='distribuidor_tareas', queue=self.queue_name)
-        
-        print(f"[WORKER-{self.worker_id}] Iniciado y listo para procesar tareas suscrito al exchange 'distribuidor_tareas'", flush=True)
+
+
+        self.channel.queue_bind(exchange='tareas_reflectivas', queue=self.queue_name, routing_key=tipo_tarea)
+        print(f"[WORKER-{self.worker_id}] Suscrito a tareas de tipo '{tipo_tarea}'", flush=True)
+            
+
+        print(f"[WORKER-{self.worker_id}] Iniciado y listo para procesar tareas suscrito al exchange 'tareas_reflectivas'", flush=True)
     
     def procesar_tarea(self, ch, method, properties, body):
         """Callback para procesar una tarea recibida"""
@@ -33,10 +38,10 @@ class WorkerTareas:
             tarea = json.loads(body)
             complejidad = tarea['complejidad']
             tarea_id = tarea['id']
-            
-            print(f"[WORKER-{self.worker_id}] Recibió tarea {tarea_id} (complejidad: {complejidad})", flush=True)
-            
-            
+            tipo = tarea['tipo']
+
+            print(f"[WORKER-{self.worker_id}] Recibió tarea {tarea_id} (complejidad: {complejidad}, tipo: {tipo})", flush=True)
+
             time.sleep(complejidad)
             
             print(f"[WORKER-{self.worker_id}] Tarea completada: {tarea_id}", flush=True)

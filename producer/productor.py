@@ -16,31 +16,34 @@ class ProductorTareas:
 
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
-        
-        self.channel.exchange_declare(exchange='distribuidor_tareas', exchange_type='fanout')
-        
-    def enviar_tarea(self, complejidad):
+
+        self.channel.exchange_declare(exchange='tareas_reflectivas', exchange_type='direct')
+
+    def enviar_tarea(self, complejidad, tipo):
         """Envía una tarea a la cola con la complejidad especificada"""
         tarea = {
             'complejidad': complejidad,
+            'tipo': tipo,
             'timestamp': time.time(),
             'id': random.randint(1000, 9999)
         }
         
         self.channel.basic_publish(
-            exchange='distribuidor_tareas',
-            routing_key='',
+            exchange='tareas_reflectivas',
+            routing_key=tipo,
             body=json.dumps(tarea),
         )
-        print(f"[PRODUCER] Tarea enviada: ID {tarea['id']}, Complejidad: {complejidad}", flush=True)
-    
+        print(f"[PRODUCER] Tarea enviada: ID {tarea['id']}, Complejidad: {complejidad}, Tipo: {tipo}", flush=True)
+
     def generar_tareas(self):
         """Genera 10 tareas con complejidades aleatorias"""
+        tipo_tareas = ['tarea_chevere', 'tarea_paila_reflectiva']
         print("[PRODUCER] Generando 10 tareas...", flush=True)
         for i in range(10):
             complejidad = random.randint(1, 5)
-            self.enviar_tarea(complejidad)
-            time.sleep(0.5)  # Pequeña pausa entre tareas
+            tipo = random.choice(tipo_tareas)
+            self.enviar_tarea(complejidad, tipo)
+            time.sleep(0.5) 
         
         self.connection.close()
         print("[PRODUCER] Todas las tareas han sido enviadas", flush=True)

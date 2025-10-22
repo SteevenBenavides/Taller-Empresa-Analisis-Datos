@@ -36,7 +36,10 @@ services:
         condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
+      - RABBIT_USER=admin
+      - RABBIT_PASS=admin
       - WORKER_ID=1
+      - TIPO_TAREA=tarea_chevere
     networks:
       - rabbitnet
 
@@ -48,7 +51,10 @@ services:
         condition: service_healthy
     environment:
       - RABBIT_HOST=rabbitmq
+      - RABBIT_USER=admin
+      - RABBIT_PASS=admin
       - WORKER_ID=2
+      - TIPO_TAREA=tarea_paila_reflectiva
     networks:
       - rabbitnet
 
